@@ -4,15 +4,14 @@ import urllib.request
 from urllib.request import urlopen
 import os
 from urllib.error import HTTPError
-# from googletrans import Translator
+from googletrans import Translator
 from selenium import webdriver
 import traceback
 import ssl
 
-
-
+not_fount_list = []
 def get_list():
-    f = open("data.txt", "r")
+    f = open("data2.txt", "r")
     str = f.read()
     return list(str.split('\n'))
 
@@ -34,10 +33,9 @@ def get_image():
     for i in range(cnt):
         li.remove('')
     empty_list = []
-    url = "https://en.wikipedia.org/wiki/"  # 이미지 src와 조합하여 다운받을 주소
 
     for src in li:
-        url = "https://en.wikipedia.org/wiki/" + src
+        url = ("https://en.wikipedia.org/wiki/" + src.lower())
         try:
             html = urllib.request.urlopen(url)
         except HTTPError as e:
@@ -47,13 +45,6 @@ def get_image():
         source = html.read()
 
         soup = BeautifulSoup(source, "html.parser")
-        # title = soup.find(title)
-
-        # if '(disambiguation)' in str(title):
-        #     print ("dis 포함")
-        #     link = soup.find(p)
-        #     link2 = link.find(a)
-        #     a.ttrs['href']
             
         imgclass = soup.find_all(class_='image')
 
@@ -62,7 +53,7 @@ def get_image():
         if 'Question_book' in str(img) or 'Wiki_letter' in str(img):
             print("책임!")
             img = imgclass[1].find('img')
-        elif 'Disambig_gray' in str(img):
+        elif 'Disambig_gray' in str(img) or 'DAB_list_gray' in str(img):
             empty_list.append(src)
             continue
 
@@ -75,49 +66,105 @@ def get_image():
 
 
 def get_image_kr(empty_list):
-    base_url = 'https://www.google.com/search'
-    hdr = {'User-Agent': 'Mozilla/5.0'}
-    for e in empty_list:
-        values = {'q': e, 'oq': e, 'aqs': 'chrome..69i57.35694j0j7', 'sourceid': 'chrome', 'ie': 'UTF-8', }
-
-        query_string = urllib.parse.urlencode(values) 
-        req = urllib.request.Request(base_url + '?' + query_string, headers=hdr) 
-        context = ssl._create_unverified_context() 
-        print(req._full_url)
+    
+    save_list = []
+    print(empty_list)
+    for (name, e) in empty_list:
+        print (name, e)
+        if e.count(' ') > 0:
+            e = e.replace(' ', '')
+        url = ("https://ko.wikipedia.org/wiki/" + urllib.parse.quote_plus(e))
+        print(url)
         try:
-            res = urllib.request.urlopen(req, context=context) 
-        except:
-            traceback.print_exc()
-        soup = BeautifulSoup(res.read(), 'html.parser')
-        title_class = soup.find('div', div_="kp_header")
-        res = soup.find_all("span")
-        print(res)
-        #print(res.get_text())
+            html = urllib.request.urlopen(url)
+        except HTTPError as error:
+            save_list.append([name, e])
+            print("http에러" + name)
+            continue
+
+        source = html.read()
+
+        soup = BeautifulSoup(source, "html.parser")
+            
+        imgclass = soup.find_all(class_='image')
+
+        img = imgclass[0].find('img')
+
+        if 'Question_book' in str(img) or 'Wiki_letter' in str(img):
+            img = imgclass[1].find('img')
+        elif 'Disambig' in str(img) or 'DBA_list_gray' in str(img):
+            if len(imgclass) > 1:
+                img = imgclass[1].find('img')
+            else:
+                save_list.append([name, e])
+                print("Disambig_gray" + name)
+                continue
+
+        t = urlopen("https:"+img.attrs['src']).read()
+        filename = "img/"+name+'.jpg'
+        with open(filename, "wb") as f:
+            f.write(t)
+            f.close()
+
+    return save_list
+
+def convert_en_to_ko(empty_list):
+    options = webdriver.ChromeOptions()
+    options.add_argument('headless')
+    options.add_argument('window-size=1920x1080')
+    options.add_argument("disable-gpu")
+
+    driver = webdriver.Chrome('./chromedriver', chrome_options=options)
+    driver.set_window_size(100, 100)
+    driver.implicitly_wait(1)
+    save_list = []
+    # 오류 하나 해결해야함 화살표
+    for e in empty_list:
+        driver.get('https://google.co.kr')
+        elem = driver.find_element_by_name('q')
+        elem.send_keys(e)
+        elem.submit()
+        html = driver.page_source
+
+        soup = BeautifulSoup(html, "html.parser")
+        imgclass = soup.find_all(class_='kno-ecr-pt kno-fb-ctx PZPZlf gsmt')
+        if len(imgclass) > 0:
+            img = imgclass[0].find('span')
+        else:
+            not_fount_list.append(e)
+            continue
+
+        save_list.append([e, img.get_text()])
+    driver.quit()
+    return save_list
+
+def tanslate_en_to_ko(empty_list):
+    translator = Translator()
+    save_list = []
+    for e in empty_list:
+
+        translator.translate(e, src='en', dest='ko')
+        print(e)
+        save_list.append(e)
+    return save_list
         
-
-        # driver = webdriver.Chrome('./chromedriver')
-        # driver.set_window_size(800, 600)
-        # driver.implicitly_wait(5)
-        # driver.get('https://google.co.kr')
-
-        # elem = driver.find_element_by_id('lst-ib')
-        # elem.send_keys(e)
-        # elem.submit()
-        # html = driver.page_source
-        # print(html)
-
+    
 
 empty_list = get_image()
-get_image_kr(empty_list)
-# translator = Translator()
-# for e in empty_list:
-#     print(translator.translate(e, src='en', dest='ko'))
+print("첫번째 시작")
+empty_list = get_image_kr(convert_en_to_ko(empty_list))
+print("첫번째 끝남")
+save_list = get_image_kr(tanslate_en_to_ko(empty_list))
 
-# print(empty_list)
-# if len(empty_list) > 0:
-#     f = open("empty.txt", "w")
-#     f.write('\n'.join(empty_list))
-#     f.close()
-# else:
-#     if os.path.isfile("empty.txt"):
-#         os.remove("empty.txt")
+if len(save_list) > 0:
+    print(save_list)
+    f = open("empty.txt", "w")
+    sum_list = list(map(lambda x: x[0], save_list))
+
+    f.write('\n'.join(sum_list))#오류
+    if len(not_fount_list) > 0:
+        f.write('\n'.join(not_fount_list))
+    f.close()
+else:
+    if os.path.isfile("empty.txt"):
+        os.remove("empty.txt")

@@ -1,0 +1,112 @@
+berry
+wileberry
+grape
+raisin
+apple
+banana
+watermelon
+grapefruit
+pomelo
+orange
+green bean
+melon
+kiwi
+cherry
+oriental melon
+melon
+pear
+peach
+plum
+prune
+japanese apricot
+apricot
+mango
+papaya
+avocado
+tomato
+pineapple
+guava
+coconut
+lime
+aloe
+lemon
+actinidia arguta
+wild grape
+citron
+fig
+pomegranate
+lettuce
+chinese cabbage
+cabbage
+cauliflower
+celery
+croccoli
+spinach
+eggplant
+pea
+black bean
+kidney bean
+cucumber
+carrot
+radish
+turnip
+mushroom
+potato
+yam
+sweet potato
+pepper
+green pepper
+red pepper
+green pepper
+onion
+pearl onion
+pumpkin
+zucchini
+bean sprouts
+green onion
+mugwort
+garlic
+ginger
+parsley
+persimmon
+dried persimmon
+mustard
+grain crops
+rice field
+soybean
+bellflower
+quince
+wheat
+rye
+chestnut
+white rice
+barley
+chives
+lettuce
+snow pea
+seedless fruit
+curled mallow
+button mushroom
+lotus root
+corn
+burdock
+gingko nut
+pine nut
+glutinous rice
+chinese orange
+red bean
+brown rice
+walnut
+acorn
+blueberry
+jujube
+mulberry
+ginseng
+wild ginseng
+deodeok
+bamboo shoot
+paprika
+peanut
+sesame
+sesame leaf
+seaweed
