@@ -1,5 +1,5 @@
 berry
-wileberry
+wildberry
 grape
 raisin
 apple
@@ -40,7 +40,7 @@ chinese cabbage
 cabbage
 cauliflower
 celery
-croccoli
+broccoli
 spinach
 eggplant
 pea
@@ -84,8 +84,7 @@ barley
 chives
 lettuce
 snow pea
-seedless fruit
-curled mallow
+Malva verticillata
 button mushroom
 lotus root
 corn

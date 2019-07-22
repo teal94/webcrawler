@@ -1,9 +1,1 @@
-Honeydew Melon
-Java Plum
-Jujube Fruit
-Lime
-Orange
-Pitanga
-Plantain
-Prickly Pear
-Sapote, Mamey
+yam

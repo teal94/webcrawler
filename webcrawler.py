@@ -8,8 +8,11 @@ from googletrans import Translator
 from selenium import webdriver
 import traceback
 import ssl
+from selenium.webdriver.support.ui import WebDriverWait
+import time
 
-not_fount_list = []
+
+not_found_list = []
 def get_list():
     f = open("data2.txt", "r")
     str = f.read()
@@ -72,12 +75,22 @@ def get_image_kr(empty_list):
     for (name, e) in empty_list:
         print (name, e)
         if e.count(' ') > 0:
-            e = e.replace(' ', '')
+            e = e.replace(' ', '_')
         url = ("https://ko.wikipedia.org/wiki/" + urllib.parse.quote_plus(e))
         print(url)
         try:
             html = urllib.request.urlopen(url)
         except HTTPError as error:
+            if e.count('_') > 0:
+                e = e.replace('_', '')
+                url = ("https://ko.wikipedia.org/wiki/" + urllib.parse.quote_plus(e))
+                try:
+                    html = urllib.request.urlopen(url)
+                except HTTPError as error:
+                    save_list.append([name, e])
+                    print("http에러", name)
+                    continue
+                
             save_list.append([name, e])
             print("http에러" + name)
             continue
@@ -125,30 +138,66 @@ def convert_en_to_ko(empty_list):
         elem.send_keys(e)
         elem.submit()
         html = driver.page_source
-
         soup = BeautifulSoup(html, "html.parser")
+        
         imgclass = soup.find_all(class_='kno-ecr-pt kno-fb-ctx PZPZlf gsmt')
         if len(imgclass) > 0:
             img = imgclass[0].find('span')
         else:
-            not_fount_list.append(e)
+            not_found_list.append([e, ""])
             continue
-
         save_list.append([e, img.get_text()])
+
+    print("not_found :", not_found_list)
     driver.quit()
     return save_list
 
-def tanslate_en_to_ko(empty_list):
-    translator = Translator()
-    save_list = []
-    for e in empty_list:
+# def tanslate_en_to_ko(empty_list):
+#     translator = Translator()
+#     save_list = []
+#     for e in empty_list:
 
-        translator.translate(e, src='en', dest='ko')
-        print(e)
-        save_list.append(e)
-    return save_list
+#         translator.translate(e, src='en', dest='ko')
+#         print(e)
+#         save_list.append(e)
+#     return save_list
+
+def tanslate_en_to_ko(empty_list):
+    options = webdriver.ChromeOptions()
+    options.add_argument('headless')
+    options.add_argument('window-size=1920x1080')
+    options.add_argument("disable-gpu")
+
+    driver = webdriver.Chrome('./chromedriver', chrome_options=options)
+    driver.set_window_size(800, 800)
+    driver.implicitly_wait(1)
+    save_list = []
+    empty_list += not_found_list
+    not_found_list.clear()
+    # 오류 하나 해결해야함 화살표
+    print(empty_list)
+    for e in empty_list:
+        driver.get('https://translate.google.co.kr/?hl=ko')
+        elem = driver.find_element_by_id('source')
+        elem.send_keys(e[0])
+        time.sleep(3)
+        html = driver.page_source
+        soup = BeautifulSoup(html, "html.parser")
+        imgclass = soup.find_all(class_='tlid-translation translation')
+
+        print(imgclass)
+        if len(imgclass[0].find('span')) > 0:
+            img = imgclass[0].find('span')
+            save_list.append([e[0], img.get_text()])
+        else:
+            not_found_list.append(e)
+            continue
         
-    
+    print("not_found2 :", not_found_list)
+    driver.quit()
+    print("save_list :", save_list)
+    return save_list
+
 
 empty_list = get_image()
 print("첫번째 시작")
@@ -157,13 +206,14 @@ print("첫번째 끝남")
 save_list = get_image_kr(tanslate_en_to_ko(empty_list))
 
 if len(save_list) > 0:
-    print(save_list)
+    print("save_list : ", save_list)
     f = open("empty.txt", "w")
     sum_list = list(map(lambda x: x[0], save_list))
 
-    f.write('\n'.join(sum_list))#오류
-    if len(not_fount_list) > 0:
-        f.write('\n'.join(not_fount_list))
+    f.write('\n'.join(sum_list)) #오류
+    f.write('\n')
+    if len(not_found_list) > 0:
+        f.write('\n'.join(not_found_list))
     f.close()
 else:
     if os.path.isfile("empty.txt"):
